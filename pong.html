@@ -1,0 +1,210 @@
+
+<canvas width="600" height="400"></canvas>
+<html>
+
+<script>
+
+/*Este é o código do jogo pong para ser jogado no navegador*/
+
+ // Definição Tela
+var tela = document.querySelector('canvas');
+var pincel = tela.getContext('2d');
+let alturaTela = 400;
+let larguraTela = 600;
+// Definição das propriedades da bola
+let xBola = 300;
+let yBola = 200;
+let raio = 8;
+let velocidadeXBola = 1;
+let velocidadeYBola = 1;
+// Definição das propriedades da raquete do jogador
+let larguraRaquete = 8;
+let alturaRaquete = 90;
+let xRaquete = 2;
+let yRaquete = 150;
+// Definição das propriedades da raquete do oponente
+let xRaqueteOponente = 590;
+let yRaqueteOponente = 150;
+let velocidadeYOponente;
+let chanceDeErrar = 0;
+// Placar do Jogo
+var meusPontos = 0;
+var pontosOponente = 0;
+//Variáveis de apoio
+var inicia;
+var intervalo;
+var audioFundo;
+var audioPonto;
+var audioRaquetada;
+
+
+function limpaTela(){
+    pincel.fillStyle = 'black';
+    pincel.fillRect(0, 0, larguraTela, alturaTela);
+}
+function desenhaRaquete(x, y,largura, altura){
+    pincel.fillStyle = 'white';
+    pincel.beginPath();
+    pincel.rect(x, y, largura, altura);
+    pincel.fill();
+}
+
+function desenhaBola(x, y, raio) {
+    pincel.fillStyle = 'white';
+    pincel.beginPath();
+    pincel.arc(x, y, raio, 0, 2 * Math.PI);
+    pincel.fill();
+}
+
+function movimentaBola(){
+    limpaTela();
+    if(xBola >= (larguraTela - raio) || xBola <= raio){
+        velocidadeXBola *= -1;
+        audioPonto = document.getElementById("audioPonto");
+        audioPonto.play();
+    }
+    if(yBola >= (alturaTela - raio) || yBola <= raio){
+        velocidadeYBola *= -1;
+    }
+        iniciaJogo();
+        xBola += velocidadeXBola;
+        yBola += velocidadeYBola;
+}
+function movimentaRaquete(evento){
+    var x = evento.key;
+    if(x == 'ArrowUp'){
+        yRaquete -= 10;
+    }
+    if(x == 'ArrowDown'){
+        yRaquete += 10;
+    }
+}
+function movimentaRaqueteOponente(){
+    velocidadeYOponente = yBola -yRaqueteOponente - larguraRaquete / 2 - 30;
+    yRaqueteOponente += velocidadeYOponente + chanceDeErrar;
+    calculaChanceDeErrar();
+    
+}
+
+function calculaChanceDeErrar(){
+    if (pontosOponente >= meusPontos) {
+    chanceDeErrar += 1
+    if (chanceDeErrar >= 39){
+    chanceDeErrar = 40
+    }
+  } else {
+    chanceDeErrar -= 1
+    if (chanceDeErrar <= 35){
+    chanceDeErrar = 35
+    }
+  }
+}
+
+function colisaoRaquete(){
+    if(xBola - raio < xRaquete + larguraRaquete
+     && yBola - raio < yRaquete + alturaRaquete 
+     && yBola + raio > yRaquete){
+        velocidadeXBola *= -1;
+        audioRaquetada = document.getElementById("audioRaquetada");
+        audioRaquetada.play();
+    }
+}
+
+function colisaoRaqueteOponente(){
+    if(xBola + raio > xRaqueteOponente
+    && yBola - raio < yRaqueteOponente + alturaRaquete 
+     && yBola + raio > yRaqueteOponente){
+        velocidadeXBola *= -1;
+        audioRaquetada = document.getElementById("audioRaquetada");
+        audioRaquetada.play();
+    }
+}
+
+function incluirPlacar(){
+    pincel.fillStyle = 'orange';
+    pincel.beginPath();
+    pincel.rect(180, 10, 40, 30);
+    pincel.rect(380, 10, 40, 30);
+    pincel.fill();
+    pincel.strokeStyle = 'white';
+    pincel.strokeRect(180, 10, 40, 30);
+    pincel.strokeRect(380, 10, 40, 30);
+    pincel.fillStyle = 'white';
+    pincel.font = '30px serif';
+    pincel.textAlign = 'center';
+    pincel.fillText(meusPontos,200,35);
+    pincel.fillText(pontosOponente,400,35);
+}
+
+function marcaPonto(){
+    if(xBola > (591)){
+        meusPontos++;
+    }
+    if(xBola == (0 + tela.offsetLeft)){
+        pontosOponente++;
+    }
+}
+function insereMusica(){
+    audioFundo = document.getElementById("audioFundo");
+    audioFundo.loop = true;
+    audioFundo.volume = 0.2;
+    audioFundo.play();
+}
+
+function iniciaJogo(){
+        inicia = 1;
+        desenhaBola(xBola,yBola,raio);
+        desenhaRaquete(xRaquete,yRaquete,larguraRaquete,alturaRaquete);
+        desenhaRaquete(xRaqueteOponente,yRaqueteOponente,larguraRaquete,alturaRaquete);
+        colisaoRaquete();
+        colisaoRaqueteOponente();
+        movimentaRaqueteOponente();
+        incluirPlacar();
+        marcaPonto();
+}
+
+function telaInicial(){
+    limpaTela();
+    meusPontos = 0;
+    pontosOponente = 0;
+    xBola = 300;
+    yBola = 200;
+    yRaquete = 150;
+    yRaqueteOponente = 150;
+    desenhaBola(xBola,yBola,raio);
+    desenhaRaquete(xRaquete,yRaquete,larguraRaquete,alturaRaquete);
+    desenhaRaquete(xRaqueteOponente,yRaqueteOponente,larguraRaquete,alturaRaquete);
+    incluirPlacar();
+}
+
+function play(){
+    window.onkeydown = movimentaRaquete;
+    intervalo = setInterval(movimentaBola,5);
+    document.getElementById("botaoComeca").disabled = true;
+}
+
+function stop(){
+    inicia = 0;
+    clearInterval(intervalo);
+    limpaTela();
+    telaInicial();
+    audioFundo = document.getElementById("audioFundo");
+    audioFundo.pause();
+    audioFundo.currentTime = 0;
+    document.getElementById("botaoComeca").disabled= false;
+    
+}
+
+telaInicial();
+
+
+</script>
+<div style='text-align: center; width: 50%;'>
+<button id="botaoComeca" onclick="insereMusica();play();" style="font-size: 16px; padding: 12px 28px; border-radius: 4px; background-color: #4CAF50; box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);">Começar</button>
+<button id="botaoParar" onclick= "stop();" style="font-size: 16px; padding: 12px 28px; border-radius: 4px; background-color: #df2100; box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);">Parar</button>
+<audio id="audioFundo" src="trilha.mp3"></audio>
+<audio id="audioPonto" src="ponto.mp3"></audio>
+<audio id="audioRaquetada" src="raquetada.mp3"></audio>
+</div>
+
+</html>
